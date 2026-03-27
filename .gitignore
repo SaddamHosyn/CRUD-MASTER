@@ -1,0 +1,47 @@
+# Python - Auto-generated cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE - VSCode, PyCharm, etc.
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS - macOS, Windows, Linux
+.DS_Store
+Thumbs.db
+.env.local
+
+# Project-specific
+*.log
+instance/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Vagrant
+.vagrant/
+*.box
+
+# Node/PM2
+node_modules/
+npm-debug.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS Lock files
+.lock
