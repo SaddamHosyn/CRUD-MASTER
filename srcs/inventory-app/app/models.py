@@ -43,14 +43,16 @@ class Movie(db.Model):
     
     genre = db.Column(
         db.String(100),
-        nullable=False,
-        doc="Movie genre (e.g., 'Action', 'Comedy', 'Drama', etc.)"
+        nullable=True,
+        default="Unknown",
+        doc="Movie genre (e.g., 'Action', 'Comedy', 'Drama', etc.) - Optional"
     )
     
     release_year = db.Column(
         db.Integer,
-        nullable=False,
-        doc="Year the movie was released (e.g., 2023)"
+        nullable=True,
+        default=2024,
+        doc="Year the movie was released (e.g., 2023) - Optional"
     )
     
     rating = db.Column(

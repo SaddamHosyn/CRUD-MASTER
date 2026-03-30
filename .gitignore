@@ -45,3 +45,11 @@ npm-debug.log
 
 # OS Lock files
 .lock
+
+# User-requested exclusions
+CRUD_Master_README.md
+CRUD_Master_readme.md
+tomorrowwork.md
+logs/
+*.txt
+!srcs/**/requirements.txt

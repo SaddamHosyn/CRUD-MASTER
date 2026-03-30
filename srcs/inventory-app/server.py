@@ -22,8 +22,16 @@ The server will:
 # CRITICAL: Load environment variables FIRST before importing anything else!
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-load_dotenv()
+env_candidates = [
+    Path('/home/vagrant/.env'),
+    Path(__file__).resolve().parents[2] / '.env'
+]
+for env_file in env_candidates:
+    if env_file.exists():
+        load_dotenv(env_file, override=True)
+        break
 
 # Now import the app factory
 from app import create_app

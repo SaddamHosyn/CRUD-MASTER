@@ -1,135 +1,71 @@
-# CRUD Master Vagrant Configuration
-# This file defines three virtual machines for the microservices project:
+# CRUD Master Vagrant Configuration - VirtualBox Provider
+# Three separate Ubuntu VMs running on VirtualBox with private network
+# 
+# Services:
 # - gateway-vm: API Gateway (port 3000)
-# - inventory-vm: Inventory API with PostgreSQL (port 8080)
-# - billing-vm: Billing API with RabbitMQ and PostgreSQL (port 8081)
+# - inventory-vm: Inventory API + PostgreSQL (port 8080)
+# - billing-vm: Billing API + RabbitMQ + PostgreSQL (port 8081)
 
-# Load environment variables from .env file
-env = {}
-File.foreach('.env') do |line|
-  # Skip comments and empty lines
-  next if line.strip.start_with?('#') || line.strip.empty?
-  
-  # Split on first '=' to handle values with '=' in them
-  key, value = line.strip.split('=', 2)
-  env[key] = value
+# Load root .env once; this is the single source of truth.
+env_vars = {}
+if File.exist?('.env')
+  File.foreach('.env') do |line|
+    next if line.strip.empty? || line.strip.start_with?('#')
+
+    key, value = line.strip.split('=', 2)
+    env_vars[key] = value if key && value
+  end
 end
 
-# Define Vagrant configuration
 Vagrant.configure('2') do |config|
-  
+  # Global VirtualBox settings
+  config.vm.provider "virtualbox" do |v|
+    v.memory = 2048
+    v.cpus = 2
+  end
+
   # ============================================================
-  # VM 1: GATEWAY-VM (API Gateway)
+  # VM 1: GATEWAY-VM (API Gateway on port 3000)
   # ============================================================
-  # Purpose: Single entry point for all client requests
-  # Proxies /api/movies/* to inventory-vm
-  # Publishes /api/billing to RabbitMQ on billing-vm
-  # Port: 3000
-  
   config.vm.define "gateway-vm" do |gateway|
-    gateway.vm.box = "ubuntu/focal64"
+    gateway.vm.box = "hashicorp-education/ubuntu-24-04"
     gateway.vm.hostname = "gateway-vm"
+    gateway.vm.network "private_network", ip: "192.168.56.10"
+    gateway.vm.network "forwarded_port", guest: 3000, host: 3000
     
-    # Static IP for private network (used by other VMs to reach gateway)
-    gateway.vm.network "private_network", ip: env['GATEWAY_IP']
+    gateway.vm.synced_folder "./srcs", "/home/vagrant/srcs", type: "rsync", rsync__auto: true
     
-    # Sync srcs folder from host to VM
-    # /Users/.../srcs → /home/vagrant/srcs
-    gateway.vm.synced_folder "./srcs", "/home/vagrant/srcs"
-    
-    # Run setup script for gateway during provisioning
-    gateway.vm.provision "shell", path: "scripts/setup_gateway.sh", env: {
-      "INVENTORY_IP"        => env['INVENTORY_IP'],
-      "INVENTORY_PORT"      => env['INVENTORY_PORT'],
-      "RABBITMQ_HOST"       => env['RABBITMQ_HOST'],
-      "RABBITMQ_PORT"       => env['RABBITMQ_PORT'],
-      "RABBITMQ_USER"       => env['RABBITMQ_USER'],
-      "RABBITMQ_PASSWORD"   => env['RABBITMQ_PASSWORD'],
-      "RABBITMQ_QUEUE"      => env['RABBITMQ_QUEUE'],
-      "GATEWAY_PORT"        => env['GATEWAY_PORT']
-    }
-    
-    # VirtualBox-specific settings
-    gateway.vm.provider "virtualbox" do |vb|
-      vb.name = "gateway-vm"
-      vb.memory = 1024  # 1 GB RAM
-      vb.cpus = 1
-    end
+    gateway.vm.provision "shell", path: "scripts/setup_gateway.sh", env: env_vars
   end
-  
+
   # ============================================================
-  # VM 2: INVENTORY-VM (Inventory API + PostgreSQL)
+  # VM 2: INVENTORY-VM (Inventory API + PostgreSQL on port 8080)
   # ============================================================
-  # Purpose: REST API for movie CRUD operations
-  # Database: PostgreSQL (movies table)
-  # Port: 8080
-  
   config.vm.define "inventory-vm" do |inventory|
-    inventory.vm.box = "ubuntu/focal64"
+    inventory.vm.box = "hashicorp-education/ubuntu-24-04"
     inventory.vm.hostname = "inventory-vm"
+    inventory.vm.network "private_network", ip: "192.168.56.11"
+    inventory.vm.network "forwarded_port", guest: 8080, host: 8080
     
-    # Static IP for private network
-    inventory.vm.network "private_network", ip: env['INVENTORY_IP']
+    inventory.vm.synced_folder "./srcs", "/home/vagrant/srcs", type: "rsync", rsync__auto: true
     
-    # Sync srcs folder
-    inventory.vm.synced_folder "./srcs", "/home/vagrant/srcs"
-    
-    # Run setup script for inventory
-    inventory.vm.provision "shell", path: "scripts/setup_inventory.sh", env: {
-      "INVENTORY_DB_NAME"     => env['INVENTORY_DB_NAME'],
-      "INVENTORY_DB_USER"     => env['INVENTORY_DB_USER'],
-      "INVENTORY_DB_PASSWORD" => env['INVENTORY_DB_PASSWORD'],
-      "INVENTORY_DB_HOST"     => env['INVENTORY_DB_HOST'],
-      "INVENTORY_DB_PORT"     => env['INVENTORY_DB_PORT'],
-      "INVENTORY_PORT"        => env['INVENTORY_PORT']
-    }
-    
-    # VirtualBox-specific settings
-    inventory.vm.provider "virtualbox" do |vb|
-      vb.name = "inventory-vm"
-      vb.memory = 1024  # 1 GB RAM (PostgreSQL + Flask)
-      vb.cpus = 1
-    end
+    inventory.vm.provision "shell", path: "scripts/setup_inventory.sh", env: env_vars
   end
-  
+
   # ============================================================
   # VM 3: BILLING-VM (Billing API + RabbitMQ + PostgreSQL)
   # ============================================================
-  # Purpose: Message-driven service that consumes from RabbitMQ
-  # Database: PostgreSQL (orders table)
-  # Message Queue: RabbitMQ (billing_queue)
-  # Port: 8081 (for future HTTP endpoints)
-  
   config.vm.define "billing-vm" do |billing|
-    billing.vm.box = "ubuntu/focal64"
+    billing.vm.box = "hashicorp-education/ubuntu-24-04"
     billing.vm.hostname = "billing-vm"
+    billing.vm.network "private_network", ip: "192.168.56.12"
+    billing.vm.network "forwarded_port", guest: 8081, host: 8081
+    billing.vm.network "forwarded_port", guest: 5672, host: 5672
+    billing.vm.network "forwarded_port", guest: 15672, host: 15672
     
-    # Static IP for private network (RabbitMQ accessed via this IP)
-    billing.vm.network "private_network", ip: env['BILLING_IP']
+    billing.vm.synced_folder "./srcs", "/home/vagrant/srcs", type: "rsync", rsync__auto: true
     
-    # Sync srcs folder
-    billing.vm.synced_folder "./srcs", "/home/vagrant/srcs"
-    
-    # Run setup script for billing
-    billing.vm.provision "shell", path: "scripts/setup_billing.sh", env: {
-      "BILLING_DB_NAME"       => env['BILLING_DB_NAME'],
-      "BILLING_DB_USER"       => env['BILLING_DB_USER'],
-      "BILLING_DB_PASSWORD"   => env['BILLING_DB_PASSWORD'],
-      "BILLING_DB_HOST"       => env['BILLING_DB_HOST'],
-      "BILLING_DB_PORT"       => env['BILLING_DB_PORT'],
-      "RABBITMQ_USER"         => env['RABBITMQ_USER'],
-      "RABBITMQ_PASSWORD"     => env['RABBITMQ_PASSWORD'],
-      "RABBITMQ_PORT"         => env['RABBITMQ_PORT'],
-      "RABBITMQ_QUEUE"        => env['RABBITMQ_QUEUE'],
-      "BILLING_PORT"          => env['BILLING_PORT']
-    }
-    
-    # VirtualBox-specific settings
-    billing.vm.provider "virtualbox" do |vb|
-      vb.name = "billing-vm"
-      vb.memory = 1024  # 1 GB RAM (RabbitMQ + PostgreSQL + Python)
-      vb.cpus = 1
-    end
+    billing.vm.provision "shell", path: "scripts/setup_billing.sh", env: env_vars
   end
   
 end

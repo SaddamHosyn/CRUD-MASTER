@@ -1,5 +1,66 @@
 # CRUD Master: Complete Microservices Implementation Guide
 
+## 🔎 Executive Summary (Done Today vs Tomorrow)
+
+### ✅ What Is Done
+
+1. Core services implemented and running:
+
+- Inventory API (CRUD)
+- Billing consumer (RabbitMQ -> PostgreSQL)
+- API Gateway (HTTP proxy + RabbitMQ publisher)
+
+2. 3-VM VirtualBox deployment stabilized on Apple Silicon.
+3. Root `.env` wired as single source of truth for provisioners.
+4. RabbitMQ auth fixed with dedicated user (no remote `guest` dependency).
+5. DB host alignment fixed (`localhost` for service-local DBs).
+6. Provisioning hardened (apt lock handling, pip compatibility, billing build deps).
+7. PM2 process stability fixed (including gateway port conflict handling).
+8. Cold-restart durability verified (`vagrant halt` + `vagrant up --provision`).
+9. API + DB verification completed:
+
+- `GET /health` -> 200
+- `GET /api/movies` -> 200
+- `POST /api/billing` -> 200
+- Billing orders persisted in DB
+
+10. Documentation artifacts exist:
+
+- `openapi.yaml`
+- `CRUD_Master.postman_collection.json`
+
+### ⏳ What Is Left to Cover Tomorrow
+
+1. README alignment pass:
+
+- Update `CRUD_Master_README.md` to reflect actual final setup choices
+  (ARM box, rsync synced folders, final env values, RabbitMQ user strategy).
+
+2. Audit dry run (one clean pass):
+
+- Follow Section 14 checklist end-to-end from scratch and record outputs.
+
+3. Postman evidence packaging:
+
+- Run full collection, export run result (`postman-results.json`), and verify all tests pass.
+
+4. OpenAPI validation pass:
+
+- Confirm documented response codes/examples match current gateway behavior.
+
+5. Repo hygiene + handoff:
+
+- Decide which generated/local files should be committed vs ignored.
+- Create final "submission checklist" section in this file.
+
+### 🚀 Suggested Tomorrow Start Order
+
+1. `vagrant status`
+2. PM2 checks on all 3 VMs
+3. Run Postman collection
+4. Verify DB state for billing resilience test
+5. Update README and finalize audit evidence bundle
+
 **Last Updated:** March 27, 2026  
 **Status:** ✅ PHASE 1-4 COMPLETE | Dependency Installation DONE
 
@@ -2972,3 +3033,83 @@ All microservices are ready for deployment.
 ✅ Dependencies installed
 ✅ All imports working
 Next: Deploy to Vagrant VMs and test end-to-end.
+
+---
+
+# March 30, 2026 Addendum: VirtualBox Stabilization and Final Validation
+
+This addendum captures the new work done after the original implementation notes above.
+
+## What Was Fixed
+
+1. VirtualBox-only path was stabilized for Apple Silicon.
+2. Root `.env` was wired as a single source of truth for provisioners.
+3. RabbitMQ authentication was corrected by switching away from `guest/guest`.
+4. Inventory and billing DB hosts were corrected to `localhost` in VM runtime.
+5. Provisioning scripts were hardened for apt lock contention and Ubuntu 24.04 pip behavior.
+6. Synced folders were changed to rsync to avoid `vboxsf` Guest Additions mount failures.
+7. Billing provisioning was updated with compile dependencies for psycopg2 fallback on ARM:
+   - `python3-dev`
+   - `libpq-dev`
+   - `build-essential`
+
+## Key File Updates
+
+- `Vagrantfile`
+  - Added root env parsing and `env` injection for all shell provisioners.
+  - Switched synced folders to `type: "rsync", rsync__auto: true` for all VMs.
+
+- `.env`
+  - `RABBITMQ_USER=billing_rmq`
+  - `RABBITMQ_PASSWORD=billing_rmq_pass`
+  - `INVENTORY_DB_HOST=localhost`
+  - `BILLING_DB_HOST=localhost`
+
+- `scripts/setup_gateway.sh`
+- `scripts/setup_inventory.sh`
+- `scripts/setup_billing.sh`
+  - Added apt/dpkg lock waiting and recovery.
+  - Kept installs non-interactive.
+  - Prevented stale VM env reads from overriding injected values.
+  - Added billing build dependencies for ARM/Python 3.12.
+
+- `srcs/api-gateway-app/server.py`
+- `srcs/inventory-app/server.py`
+- `srcs/billing-app/server.py`
+  - Env load order updated to prefer `/home/vagrant/.env`, then fallback files.
+
+## Root Causes and Resolutions
+
+- RabbitMQ `ACCESS_REFUSED`:
+  - Cause: remote `guest` auth restrictions.
+  - Fix: dedicated RabbitMQ app user and updated credentials.
+
+- `connection refused` to PostgreSQL in inventory/billing:
+  - Cause: services pointed to private IP DB host instead of local DB listener.
+  - Fix: set DB host to `localhost` for service-local DB connections.
+
+- Gateway PM2 `errored` with port conflict:
+  - Cause: stale process occupied port 3000.
+  - Fix: clear holder and restart PM2 process cleanly.
+
+- Cold boot shared folder failure (`No such device` / `vboxsf`):
+  - Cause: guest additions mismatch/missing.
+  - Fix: rsync synced folders.
+
+## Final Verification Snapshot
+
+- VM status: `gateway-vm`, `inventory-vm`, `billing-vm` all running.
+- PM2 status:
+  - `api_gateway` online
+  - `inventory_app` online
+  - `billing_app` online
+- API checks:
+  - `GET /health` -> 200
+  - `GET /api/movies` -> 200
+  - `POST /api/billing` -> 200
+- Billing persistence:
+  - Orders count increased after billing POST (DB write confirmed).
+
+## Durability Result
+
+Cold restart (`vagrant halt` then `vagrant up --provision`) passes after the fixes above.

@@ -128,23 +128,12 @@ def create_movie():
                 'error': 'Missing required field: title'
             }), 400
         
-        if not data.get('genre'):
-            return jsonify({
-                'success': False,
-                'error': 'Missing required field: genre'
-            }), 400
-        
-        if not data.get('release_year'):
-            return jsonify({
-                'success': False,
-                'error': 'Missing required field: release_year'
-            }), 400
-        
         # Create new Movie object with provided data
+        # genre and release_year are now optional (per API requirements)
         new_movie = Movie(
             title=data['title'],
-            genre=data['genre'],
-            release_year=int(data['release_year']),
+            genre=data.get('genre', 'Unknown'),
+            release_year=int(data.get('release_year', 2024)),
             description=data.get('description'),
             rating=float(data.get('rating', 0.0)),
             duration=int(data.get('duration', 120)),
