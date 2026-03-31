@@ -28,6 +28,10 @@ def create_app():
     # Create Flask app instance
     app = Flask(__name__)
     
+    # Allow trailing slashes on all routes (e.g., /api/movies/ and /api/movies both work)
+    # Required by project specification: http://[GATEWAY_IP]:[GATEWAY_PORT]/api/movies/
+    app.url_map.strict_slashes = False
+    
     # Configure SQLAlchemy
     app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Suppress warnings

@@ -107,7 +107,7 @@ def create_movie():
         }
         
     HTTP Status Codes:
-        201: Movie created successfully
+        200: Movie created successfully
         400: Missing required fields or invalid data
         500: Server error
     """
@@ -150,7 +150,7 @@ def create_movie():
             'success': True,
             'message': 'Movie created successfully',
             'movie': new_movie.to_dict()
-        }), 201
+        }), 200
         
     except ValueError as e:
         logger.error(f"ValueError creating movie: {str(e)}")

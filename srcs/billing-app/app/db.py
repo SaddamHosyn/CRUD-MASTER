@@ -7,14 +7,14 @@ Reference: CRUD_Master_README.md Section 7.2
 import os
 from flask_sqlalchemy import SQLAlchemy
 
-# Build PostgreSQL connection URI from environment variables
+# Build PostgreSQL connection URI from required environment variables.
 # Format: postgresql://[user]:[password]@[host]:[port]/[database]
 DATABASE_URI = (
-    f"postgresql://{os.environ.get('BILLING_DB_USER', 'billing_user')}:"
-    f"{os.environ.get('BILLING_DB_PASSWORD', 'billing_pass')}@"
-    f"{os.environ.get('BILLING_DB_HOST', 'localhost')}:"
-    f"{os.environ.get('BILLING_DB_PORT', '5432')}/"
-    f"{os.environ.get('BILLING_DB_NAME', 'orders')}"
+    f"postgresql://{os.environ['BILLING_DB_USER']}:"
+    f"{os.environ['BILLING_DB_PASSWORD']}@"
+    f"{os.environ['BILLING_DB_HOST']}:"
+    f"{os.environ['BILLING_DB_PORT']}/"
+    f"{os.environ['BILLING_DB_NAME']}"
 )
 
 # Initialize SQLAlchemy ORM

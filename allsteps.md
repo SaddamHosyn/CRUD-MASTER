@@ -53,6 +53,14 @@
 - Decide which generated/local files should be committed vs ignored.
 - Create final "submission checklist" section in this file.
 
+### ✅ March 31 Completion Update
+
+1. Runtime verification executed and passed.
+2. Billing end-to-end DB persistence verified again.
+3. Queue resilience test executed and passed (publish while billing stopped, then process after restart).
+4. Newman collection run executed: all requests/assertions passed.
+5. OpenAPI quick consistency scan executed for movies, billing, health, and payload fields.
+
 ### 🚀 Suggested Tomorrow Start Order
 
 1. `vagrant status`

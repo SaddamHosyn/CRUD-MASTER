@@ -40,7 +40,7 @@ def create_app():
     # SECTION 1: HTTP PROXY ROUTES FOR /api/movies/*
     # ================================================================
     
-    @app.route('/api/movies', methods=['GET', 'POST', 'DELETE'])
+    @app.route('/api/movies', methods=['GET', 'POST', 'DELETE'], strict_slashes=False)
     def proxy_movies_list():
         """
         Proxy: GET /api/movies, POST /api/movies, DELETE /api/movies
@@ -87,7 +87,7 @@ def create_app():
                 'message': str(e)
             }), 500
     
-    @app.route('/api/movies/<int:movie_id>', methods=['GET', 'PUT', 'DELETE'])
+    @app.route('/api/movies/<int:movie_id>', methods=['GET', 'PUT', 'DELETE'], strict_slashes=False)
     def proxy_movies_by_id(movie_id):
         """
         Proxy: GET /api/movies/{id}, PUT /api/movies/{id}, DELETE /api/movies/{id}
@@ -135,7 +135,7 @@ def create_app():
     # SECTION 2: RABBITQ PUBLISHER ROUTE FOR /api/billing
     # ================================================================
     
-    @app.route('/api/billing', methods=['POST'])
+    @app.route('/api/billing', methods=['POST'], strict_slashes=False)
     def publish_to_billing_queue():
         """
         RabbitMQ Publisher: POST /api/billing
@@ -177,8 +177,8 @@ def create_app():
             # Read RabbitMQ configuration from environment
             rabbitmq_host = os.environ.get('RABBITMQ_HOST', 'localhost')
             rabbitmq_port = int(os.environ.get('RABBITMQ_PORT', '5672'))
-            rabbitmq_user = os.environ.get('RABBITMQ_USER', 'rabbitmq_user')
-            rabbitmq_password = os.environ.get('RABBITMQ_PASSWORD', 'rabbitmq_pass')
+            rabbitmq_user = os.environ['RABBITMQ_USER']
+            rabbitmq_password = os.environ['RABBITMQ_PASSWORD']
             rabbitmq_queue = os.environ.get('RABBITMQ_QUEUE', 'billing_queue')
             
             print(f"[Gateway] Publishing order to RabbitMQ/queue: {rabbitmq_queue}")
@@ -242,7 +242,7 @@ def create_app():
     # HEALTH CHECK ENDPOINT
     # ================================================================
     
-    @app.route('/health', methods=['GET'])
+    @app.route('/health', methods=['GET'], strict_slashes=False)
     def health_check():
         """
         Health check endpoint

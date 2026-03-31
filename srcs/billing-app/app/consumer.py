@@ -35,8 +35,8 @@ def consume_billing_queue(app):
     # Read RabbitMQ credentials from environment variables
     rabbitmq_host = os.environ.get('RABBITMQ_HOST', 'localhost')
     rabbitmq_port = int(os.environ.get('RABBITMQ_PORT', '5672'))
-    rabbitmq_user = os.environ.get('RABBITMQ_USER', 'rabbitmq_user')
-    rabbitmq_password = os.environ.get('RABBITMQ_PASSWORD', 'rabbitmq_pass')
+    rabbitmq_user = os.environ['RABBITMQ_USER']
+    rabbitmq_password = os.environ['RABBITMQ_PASSWORD']
     rabbitmq_queue = os.environ.get('RABBITMQ_QUEUE', 'billing_queue')
     
     # Step 1: Create connection parameters with credentials
