@@ -1,21 +1,34 @@
+# ============================================================================================
+# CRUD MASTER API - OpenAPI 3.0 Specification
+# ============================================================================================
+# Purpose: This file documents all API endpoints for the API Gateway
+# Includes: Movie CRUD operations, Billing/Order endpoint, Health check endpoint
+# ============================================================================================
+
 openapi: 3.0.0
+
+# ============================================================================================
+# METADATA BLOCK - Project Information and Branding
+# ============================================================================================
+# Purpose: Defines API title, description, version, contact, and licensing information
+# Used by: API documentation portals, Swagger UI, code generators
 info:
   title: CRUD Master API Gateway
   description: |-
     Complete API Gateway for movie inventory and billing microservices.
-    
+
     This API provides:
     - **Movie Management**: Full CRUD operations for movie inventory
     - **Order Processing**: Asynchronous order creation via RabbitMQ
-    
+
     ## Architecture
     - API Gateway (Port 3000) serves as the single entry point
     - HTTP proxy routes inventory requests to Inventory API (Port 8080)
     - Billing requests are published to RabbitMQ queue (async processing)
-    
+
     ## Authentication
     Currently no authentication required for testing. In production, add JWT/OAuth2.
-    
+
   version: 1.0.0
   contact:
     name: Saddam Hussain
@@ -24,12 +37,22 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 
+# ============================================================================================
+# SERVERS BLOCK - Where the API Can Be Accessed
+# ============================================================================================
+# Purpose: Lists all available API endpoints (development, staging, production)
+# Used by: API clients to know where to send requests
 servers:
   - url: http://192.168.56.10:3000
     description: API Gateway (production - Vagrant VM)
   - url: http://localhost:3000
     description: API Gateway (local development)
 
+# ============================================================================================
+# TAGS BLOCK - Organizing Endpoints by Category
+# ============================================================================================
+# Purpose: Groups related endpoints into logical categories (similar to folder organization)
+# Used by: Documentation UI to display endpoints under tabs/sections
 tags:
   - name: Movies
     description: Movie inventory management (CRUD operations)
@@ -38,13 +61,30 @@ tags:
   - name: Health
     description: Service health and status checks
 
+# ============================================================================================
+# PATHS BLOCK - All Available Endpoints and Their Operations
+# ============================================================================================
+# Purpose: Defines every API endpoint, what HTTP methods they support, and their behavior
+# Structure: Each path → each HTTP method (GET, POST, PUT, DELETE) → parameters, responses
 paths:
+  # ========================================================================================
+  # ENDPOINT: /api/movies
+  # ========================================================================================
+  # Purpose: Base endpoint for movie collection (all movies)
+  # Supports: GET (list), POST (create), DELETE (delete all)
+  # Use Case: Retrieve multiple movies, create new movie, or bulk delete
   /api/movies:
+    # =======================================================================================
+    # HTTP GET /api/movies - Retrieve List of All Movies
+    # =======================================================================================
+    # Purpose: Fetch all movies from inventory, with optional filtering by title
+    # HTTP Method: GET (read-only, safe operation)
+    # Response: 200 OK with array of movie objects, or 500 on server error
     get:
       summary: Get all movies
       description: |-
         Retrieve a list of all movies in the inventory.
-        
+
         Supports optional filtering by movie title.
       operationId: getAllMovies
       tags:
@@ -58,12 +98,12 @@ paths:
             type: string
             example: Inception
       responses:
-        '200':
+        "200":
           description: Successfully retrieved movies
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MovieListResponse'
+                $ref: "#/components/schemas/MovieListResponse"
               example:
                 success: true
                 count: 2
@@ -88,20 +128,26 @@ paths:
                     available_copies: 4
                     created_at: "2026-03-27T18:02:00.000000"
                     updated_at: "2026-03-27T18:02:00.000000"
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
+    # =======================================================================================
+    # HTTP POST /api/movies - Create a New Movie
+    # =======================================================================================
+    # Purpose: Add a new movie to the inventory database
+    # HTTP Method: POST (creates new resource)
+    # Response: 201 Created with the new movie object, or 400/500 on error
     post:
       summary: Create a new movie
       description: |-
         Create a new movie in the inventory.
-        
+
         Required fields: title, genre, release_year
-        
+
         Returns the created movie with auto-generated ID and timestamps.
       operationId: createMovie
       tags:
@@ -111,7 +157,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateMovieRequest'
+              $ref: "#/components/schemas/CreateMovieRequest"
             example:
               title: Inception
               description: A mind-bending thriller about dreams
@@ -121,12 +167,12 @@ paths:
               duration: 148
               available_copies: 5
       responses:
-        '201':
+        "201":
           description: Movie created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MovieResponse'
+                $ref: "#/components/schemas/MovieResponse"
               example:
                 success: true
                 message: Movie created successfully
@@ -141,49 +187,70 @@ paths:
                   available_copies: 5
                   created_at: "2026-03-27T18:01:12.000000"
                   updated_at: "2026-03-27T18:01:12.000000"
-        '400':
+        "400":
           description: Invalid input (missing required fields or invalid data type)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
+    # =======================================================================================
+    # HTTP DELETE /api/movies - Delete ALL Movies (Destructive Operation)
+    # =======================================================================================
+    # Purpose: Remove ALL movies from the database in a single operation
+    # HTTP Method: DELETE (destructive, cannot be undone)
+    # ⚠️ WARNING: This is a bulk operation - use with extreme caution!
+    # Response: 200 OK with count of deleted movies, or 500 on error
     delete:
       summary: Delete all movies
       description: |-
         Delete ALL movies from the database.
-        
+
         ⚠️ **WARNING**: This is a destructive operation and cannot be undone!
-        
+
         Returns the count of deleted movies.
       operationId: deleteAllMovies
       tags:
         - Movies
       responses:
-        '200':
+        "200":
           description: All movies deleted successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteAllMoviesResponse'
+                $ref: "#/components/schemas/DeleteAllMoviesResponse"
               example:
                 success: true
                 message: All movies deleted successfully
                 deleted_count: 5
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ==========================================================================================
+  # ENDPOINT: /api/movies/{id}
+  # ==========================================================================================
+  # Purpose: Operations on a SPECIFIC movie (use ID in URL path)
+  # Supports: GET (fetch), PUT (update), DELETE (remove)
+  # Use Case: Get details, update fields, or delete one movie
 
   /api/movies/{id}:
+    # =======================================================================================
+    # HTTP GET /api/movies/{id} - Retrieve a Single Movie by ID
+    # =======================================================================================
+    # Purpose: Fetch details of one specific movie using its unique ID
+    # HTTP Method: GET (read-only)
+    # URL Parameter: id (integer) - The movie's unique identifier
+    # Response: 200 OK with movie object, or 404 if movie doesn't exist
     get:
       summary: Get a single movie by ID
       description: Retrieve a specific movie by its unique ID.
@@ -199,12 +266,12 @@ paths:
             type: integer
             example: 1
       responses:
-        '200':
+        "200":
           description: Movie found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MovieResponse'
+                $ref: "#/components/schemas/MovieResponse"
               example:
                 success: true
                 movie:
@@ -218,29 +285,37 @@ paths:
                   available_copies: 5
                   created_at: "2026-03-27T18:01:12.000000"
                   updated_at: "2026-03-27T18:01:12.000000"
-        '404':
+        "404":
           description: Movie not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 success: false
                 error: "Movie with ID 999 not found"
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
+    # =======================================================================================
+    # HTTP PUT /api/movies/{id} - Update a Specific Movie
+    # =======================================================================================
+    # Purpose: Modify one or more fields of an existing movie
+    # HTTP Method: PUT (updates existing resource)
+    # URL Parameter: id (integer) - The movie to update
+    # Response: 200 OK with updated movie object, or 404/400/500 on error
+    # Special Feature: Supports partial updates (only send fields you want to change)
     put:
       summary: Update a movie
       description: |-
         Update a specific movie by ID.
-        
+
         Only provided fields will be updated (partial updates supported).
-        
+
         Timestamps (created_at, updated_at) are automatically managed.
       operationId: updateMovie
       tags:
@@ -258,17 +333,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateMovieRequest'
+              $ref: "#/components/schemas/UpdateMovieRequest"
             example:
               rating: 9.0
               available_copies: 3
       responses:
-        '200':
+        "200":
           description: Movie updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MovieResponse'
+                $ref: "#/components/schemas/MovieResponse"
               example:
                 success: true
                 message: Movie updated successfully
@@ -283,24 +358,31 @@ paths:
                   available_copies: 3
                   created_at: "2026-03-27T18:01:12.000000"
                   updated_at: "2026-03-27T18:15:45.000000"
-        '400':
+        "400":
           description: Invalid input (invalid data type)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
           description: Movie not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                # =======================================================================================
+                # HTTP DELETE /api/movies/{id} - Delete a Single Movie
+                # =======================================================================================
+                # Purpose: Remove one specific movie from the database
+                # HTTP Method: DELETE (destructive)
+                # URL Parameter: id (integer) - The movie to delete
+                # Response: 200 OK if deleted, or 404 if movie doesn't exist
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
 
     delete:
       summary: Delete a specific movie
@@ -317,7 +399,7 @@ paths:
             type: integer
             example: 1
       responses:
-        '200':
+        "200":
           description: Movie deleted successfully
           content:
             application/json:
@@ -330,30 +412,46 @@ paths:
                   message:
                     type: string
                     example: Movie deleted successfully
-        '404':
+        "404":
           description: Movie not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ==========================================================================================
+  # ENDPOINT: /api/billing
+  # ==========================================================================================
+  # Purpose: Asynchronous order creation endpoint (publishes to RabbitMQ queue)
+  # Pattern: Message queue (fire-and-forget), NOT HTTP proxy
+  # Key Feature: Returns 200 immediately, processing happens async by Billing API
+  # Resilience: Orders persist in queue even if Billing API is offline
 
   /api/billing:
+    # =======================================================================================
+    # HTTP POST /api/billing - Create Order (Async/RabbitMQ)
+    # =======================================================================================
+    # Purpose: Accept order from client and queue it for async processing
+    # HTTP Method: POST (creates resource)
+    # Transport: Message published to RabbitMQ (NOT HTTP proxy to Billing API)
+    # Response: 200 OK immediately (before Billing API processes it)
+    # Guarantees: Message persists in durable queue until consumed and acknowledged
     post:
       summary: Create an order (async)
       description: |-
         Create an order and publish it to the RabbitMQ queue for asynchronous processing.
-        
+
         Returns 200 OK immediately (before Billing API processes it).
-        
+
         This demonstrates **eventual consistency** - the order will be processed
         when the Billing API consumes it from the queue, even if Billing API is offline.
-        
+
         ## Resilience Features
         - Message persists in durable queue if Billing API is down
         - Message will be reprocessed when Billing API restarts
@@ -366,13 +464,13 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOrderRequest'
+              $ref: "#/components/schemas/CreateOrderRequest"
             example:
               user_id: user123
               number_of_items: "5"
               total_amount: "49.99"
       responses:
-        '200':
+        "200":
           description: Order accepted and queued for processing
           content:
             application/json:
@@ -383,42 +481,56 @@ paths:
                     type: string
                     example: Order accepted and queued for processing
                   order:
-                    $ref: '#/components/schemas/Order'
+                    $ref: "#/components/schemas/Order"
               example:
                 message: Order accepted and queued for processing
                 order:
                   user_id: user123
                   number_of_items: "5"
                   total_amount: "49.99"
-        '400':
+        "400":
           description: Invalid input (missing required fields)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 error: Missing required fields
                 missing_fields:
                   - user_id
                   - number_of_items
                   - total_amount
-        '503':
+        "503":
           description: RabbitMQ is unreachable
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
               example:
                 error: Cannot connect to RabbitMQ
                 message: RabbitMQ server is unreachable
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ==========================================================================================
+  # ENDPOINT: /health
+  # ==========================================================================================
+  # Purpose: Health check endpoint to monitor API Gateway and service dependencies
+  # Use Case: Used by monitoring systems, load balancers, Postman tests
+  # Response: Single GET method returning status of all services
 
   /health:
+    # =======================================================================================
+    # HTTP GET /health - Health Status Check
+    # =======================================================================================
+    # Purpose: Verify that API Gateway is running and can reach dependencies
+    # HTTP Method: GET (read-only, safe operation)
+    # Response: 200 OK with status of gateway, Inventory API, and RabbitMQ
+    # Use Case: Monitoring, load balancer health checks, startup verification
     get:
       summary: Health check
       description: Check the health status of the API Gateway.
@@ -426,7 +538,7 @@ paths:
       tags:
         - Health
       responses:
-        '200':
+        "200":
           description: Gateway is healthy
           content:
             application/json:
@@ -615,8 +727,14 @@ components:
           type: string
           example: Movie created successfully
         movie:
-          $ref: '#/components/schemas/Movie'
+          $ref: "#/components/schemas/Movie"
 
+    # =======================================================================================
+    # SCHEMA: MovieListResponse
+    # =======================================================================================
+    # Purpose: Data structure for successful multi-movie responses
+    # Used By: GET /api/movies (when retrieving all movies)
+    # Wrapper: Includes success flag, count, and array of Movie objects
     MovieListResponse:
       type: object
       properties:
@@ -629,7 +747,7 @@ components:
         movies:
           type: array
           items:
-            $ref: '#/components/schemas/Movie'
+            $ref: "#/components/schemas/Movie"
 
     DeleteAllMoviesResponse:
       type: object
