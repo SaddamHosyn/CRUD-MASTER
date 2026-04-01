@@ -48,7 +48,9 @@ npm-debug.log
 
 # User-requested exclusions
 CRUD_Master_README.md
+AUDIT_VERIFICATION_CHECKLIST.md
 CRUD_Master_readme.md
+allsteps.md
 tomorrowwork.md
 logs/
 *.txt
