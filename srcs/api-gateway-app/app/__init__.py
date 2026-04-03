@@ -1,7 +1,6 @@
 """
 API Gateway App Factory
 Purpose: Initialize Flask app with proxy and publisher routes
-Reference: CRUD_Master_README.md Section 8
 
 Routes:
 - /api/movies/* → HTTP proxy to Inventory API
