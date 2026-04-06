@@ -45,7 +45,6 @@ Vagrant.configure('2') do |config|
     inventory.vm.box = "hashicorp-education/ubuntu-24-04"
     inventory.vm.hostname = "inventory-vm"
     inventory.vm.network "private_network", ip: "192.168.56.11"
-    inventory.vm.network "forwarded_port", guest: 8080, host: 8080
     
     inventory.vm.synced_folder "./srcs", "/home/vagrant/srcs", type: "rsync", rsync__auto: true
     
@@ -59,7 +58,6 @@ Vagrant.configure('2') do |config|
     billing.vm.box = "hashicorp-education/ubuntu-24-04"
     billing.vm.hostname = "billing-vm"
     billing.vm.network "private_network", ip: "192.168.56.12"
-    billing.vm.network "forwarded_port", guest: 8081, host: 8081
     billing.vm.network "forwarded_port", guest: 5672, host: 5672
     billing.vm.network "forwarded_port", guest: 15672, host: 15672
     
