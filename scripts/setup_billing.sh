@@ -139,6 +139,12 @@ echo "🚀 [7/13] Starting RabbitMQ service..."
 systemctl start rabbitmq-server
 systemctl enable rabbitmq-server
 
+# Enable RabbitMQ Management Plugin (for 15672 web UI)
+echo "📊 [7b/13] Enabling RabbitMQ Management Plugin..."
+sleep 3  # Wait for RabbitMQ to fully start
+rabbitmq-plugins enable rabbitmq_management
+systemctl restart rabbitmq-server
+
 # ============================================================
 # Step 8: Configure RabbitMQ User
 # ============================================================
